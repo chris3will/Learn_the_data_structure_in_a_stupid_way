@@ -16,7 +16,7 @@ Start at 17:16 on 12/13/2018
 #G:当前行移到缓冲区中用户指定的行
 #V:查看缓冲区的全部内容，打印到终端
 12/6决定放弃数据结构书本上的例子，利用string和list和基本的文件操作进行活动。
-
+12/7号最终完成 with c++11 and vscode and clang++
 */
 #include<iostream>
 #include<fstream>
@@ -35,43 +35,12 @@ class TextEdit
         list<string> textBuf;
         int curNo;
         int curPa;//当前段落,但可能后期再考虑这个吧
-        list<string> textUnBuf;
+        list<string> textUnBuf;//it can just be used once, but may change the typeof value to 'list' or some other STL.
         int curUnNo;
         int maxLine;
         ifstream inFile;
         ofstream outFile;
     public:
-       
-        /*
-        void upload()
-        {
-            T temp;
-            while(!inFile.eof())
-            {
-                getline(inFile, temp);
-                textBuf.push_back(temp);
-                curNo += 1;
-                maxLine += 1;
-                //记录当前加载到了第几行
-                delete temp;
-            }  
-        }
-        */
-       /*
-       void WriteFile()
-       {//最终文件操作完成,需要把缓冲区的文件进行写回
-            if(outFile.is_open())
-            {
-                cout << "写文件已经打开，可以进行正常写入" << endl;
-                list<string>::iterator tt;
-                string tempstr;
-                while(!outFile.eof())
-                {
-
-                }
-            }
-       }
-       */
         TextEdit()
         {
             curPa=maxLine=curNo=curUnNo=0;
@@ -87,7 +56,7 @@ class TextEdit
             {
                 outFile.close();
             }
-            cout << "$$$You made it!$$$" << endl;
+            cout << "^^^You made it!^^^" << endl;
         }
         void ReadFile(const string& filename)
         {
@@ -107,8 +76,9 @@ class TextEdit
         }
         void WriteFile(const string& filename)
         {
+            cout << "$$$Is uploading your text content~~~~~" << endl;
             if(!outFile.is_open())
-            outFile.open(filename, ios::out);
+                outFile.open(filename, ios::out);
             string tempstr;
             for (list<string>::iterator hh = textBuf.begin(); hh != textBuf.end();hh++)
             {
@@ -126,19 +96,15 @@ class TextEdit
         void Display()
         {//每次操作后可以展示对应的结果
             list<string>::iterator ev;
+            int row = 1;
+            cout << "#########################" << endl;
             for (ev = textBuf.begin(); ev != textBuf.end();ev++)
             {
+                cout << "(" << row << "): ";
                 cout << *ev << endl;
+                row++;
             }
-        }
-        void tempsave()
-        {
-            list<string>::iterator tp;
-            for (tp = textBuf.begin();tp!=textBuf.end();tp++)
-            {
-                textUnBuf.push_back(*tp);
-            }
-            cout << "$$$you have save a copy first successfully!" << endl;
+            cout<<"#########################"<<endl;
         }
         void ChangeLine()
         {
@@ -146,14 +112,15 @@ class TextEdit
             string theLine;//你想更改的内容
             
             int lineNo;
+
             cout << "$$$PLease enter the Line Number you want to change.(0 for all and the other number for one)" << endl;
             cin >> lineNo;
             getchar();//just to skip the LineNo you just entered before.
             cout << "$$$Now enter the message you want to modify: " << endl;
             getline(cin, theLine);//this is the special thing.
-
+            cout << theLine << " : this time the line is ;" << endl;
             //在改变之前，先将缓冲区的数据存到撤销缓冲区中
-            tempsave();
+            //SaveUndo();
             if(textBuf.size()!=0)
             {//读入文件有内容才进行操作
                 string curLine("\0");
@@ -170,6 +137,11 @@ class TextEdit
                         else
                         {//找到该行
                             flag = 1;
+                            if(theLine=="\n")
+                            {
+                                it = textBuf.erase(it);
+                            }
+                            else
                             tempBuf.push_back(theLine);
                         }
                     }
@@ -197,16 +169,157 @@ class TextEdit
             cout<<"$$$this is what you have done"<<endl;
             Display();
         }
-
+        bool isEmpty() { return textBuf.size() == 0; }
         bool NextLine();//转到下一行
         bool PreviousLine();//转到前一行
         bool GotoLine();//转到指定行
         bool GotoLine(int to);
         bool InsertLine(); //插入一行
+        bool DeleteLine();
         void Run();        //unDone
         void FindString(); //unDone
-
+        void SaveUndo();
+        void Undo();
+        //void FindAll();
 };
+void TextEdit::SaveUndo()
+{
+    int temp;
+    temp = curUnNo;
+    curUnNo = curNo;
+    curNo = curUnNo;
+    list<string>::iterator tp;
+    textUnBuf.clear();
+    for (tp = textBuf.begin();tp!=textBuf.end();tp++)
+    {
+        textUnBuf.push_back(*tp);
+    }
+    cout << "$$$you have save a copy in UNDO BUFFER successfully!" << endl;    
+}
+void TextEdit::Undo()
+{
+    if(textUnBuf.size()==0)
+    {
+        cout << "$$$the textUnBuf has nothing" << endl;
+    }   
+    else
+    {
+        curNo = curUnNo;
+        textBuf.swap(textUnBuf);
+        cout << "We have recover the last condition." << endl;
+    }  
+}
+void TextEdit::FindString()
+{//maybe somedays I can add some acions for the found.
+    if(!isEmpty())
+    {//is not empty
+        Display();
+        cout << "$$$We are in the searching period, do you want to search in the specific line or in all the txt file?" << endl;
+        cout << "$$$ !c! for current line and !a! for the whole file." << endl;
+        cout << "$$$ Attention, you are at the " << curNo << " line now!" << endl;
+        char choice;
+        cin >> choice;
+        getchar();
+        while(choice!='c'&&choice!='a')
+        {
+            cout << "$$$ AGAIN !c! for current line and !a! for the whole file." << endl;
+            cin >> choice;
+            getchar();
+        }
+        int got = 0;
+        cout << "$$$Please enter the content you want to match!" << endl;
+        string theContent;
+        getline(cin, theContent);
+        int len = theContent.length();//needed thing.
+        cout << "$$$The content happens in ( if it exist ): \n";
+        int row = 1;
+        list<string>::iterator it;
+        for (it = textBuf.begin();it!=textBuf.end();it++)
+        {
+           
+            int flag = 0;
+            //int times = 0;
+            string tempstr(*it);
+            int newlen = tempstr.size();
+            while(flag<=(newlen-len))
+            { 
+                int tp = tempstr.find(theContent);
+                if(choice=='c'&&row==curNo)
+                {
+                    if(tp==flag)
+                    {
+                        cout << "No. " << row << " line: ";
+                        cout << "pos: " << tp << endl;
+                        flag = 0;
+                        tempstr.erase(tp, len);
+                        newlen = tempstr.size();
+                        got = 1;
+                    }
+                }
+                if(choice=='a')
+                {
+                    if(tp==flag)
+                    {
+                    cout << "No. " << row << " line: ";
+                    cout << "pos: " << tp << endl;
+                    flag = 0;
+                    tempstr.erase(tp, len);
+                    newlen = tempstr.size();
+                    got = 1;
+                    }
+                }
+                flag++;
+            }
+            row++;
+        }
+        if(got==0)
+        {
+            cout << "$$$Sorry, no match here." << endl;
+        }
+    }
+    else
+    {
+        cout << "$$$Sorry, the file is empty, nothing can be found." << endl;
+    }
+}
+
+bool TextEdit::DeleteLine()
+{
+    if(textBuf.size()!=0)
+    {
+        cout << "$$Please enter the specific line you want to delete.(0 for all)" << endl;
+        int theNo;
+        cin >> theNo;
+        
+        if(theNo==0)
+        {
+            textBuf.clear();
+            cout << "$$$nothing is left ~!" << endl;
+        }
+        else
+        {
+            list<string> tempBuf;
+            list<string>::iterator it;
+            int row = 1;//the line which is being operated.
+            for (it = textBuf.begin(); it != textBuf.end();it++)
+            {
+                if(row==theNo)
+                {
+                    continue;
+                }
+                tempBuf.push_back(*it);
+                row++;
+            }
+            cout<<"$$$We have delete it!"<<endl;
+            textBuf.swap(tempBuf);
+            tempBuf.clear();
+        }
+    }
+    else
+    {
+        cout << "$$$The file is empty, nothing can be deleted." << endl;
+    }
+}
 bool TextEdit::NextLine()
 {
     if(curNo+1>maxLine)
@@ -225,13 +338,13 @@ bool TextEdit::PreviousLine()
 {
     if(curNo==1)
     {
-        cout << "you are now at the first line, so you can't move back to the zero one!" << endl;
+        cout << "$$$you are now at the first line, so you can't move back to the zero one!" << endl;
         return false;
     }
     else
     {
         curNo--;
-        cout<<"your current line has been minused one."<<endl;
+        cout<<"$$$your current line has been minused one."<<endl;
         return true;
     }
 }
@@ -240,30 +353,30 @@ bool TextEdit::GotoLine(int to)
     if(to>0&&to<=maxLine)
     {
         curNo=to;
-        cout<<"we made it for you to the special line!"<<endl;
+        cout<<"$$$we made it for you to the special line!"<<endl;
         return true;
     }
     else
     {
-        cout << "the number is out of range!" << endl;
+        cout << "$$$the number is out of range! we can't insert it!" << endl;
         return false;
     }
 }
 bool TextEdit::GotoLine()
 {
     int to;
-    cout << "Please enter the line no to want to arrive." << endl;
+    cout << "$$$Please enter the line no to want to arrive." << endl;
     cin>>to;
     if(to>0&&to<=maxLine)
     {
         curNo=to;
-        cout<<"we made it for you to the special line!"<<endl;
+        cout<<"$$$We made it for you to the special line!"<<endl;
         return true;
     }
     
     else
     {
-        cout << "the number is out of range!" << endl;
+        cout << "$$$The number is out of range!" << endl;
         return false;
     }
     
@@ -275,11 +388,12 @@ bool TextEdit::InsertLine()
     cout<<"$$$Please enter which line do you want to insert the it"<<endl;
     int num;
     cin >> num;
+    getchar();
     if(GotoLine(num))
     {//we find that!
-        cout << "Please Enter the content you just want to insert!" << endl;
+        cout << "$$$Please Enter the content you just want to insert!" << endl;
         string toinsert;
-        cin >> toinsert;
+        getline(cin, toinsert);
         list<string> tempBuf;
         list<string>::iterator it = textBuf.begin();
         int row = 1;//the line which we can operator directly
@@ -296,9 +410,73 @@ bool TextEdit::InsertLine()
         textBuf.swap(tempBuf);
         tempBuf.clear();
         Display();
+        cout << "$$$This procedure has been done properly!" << endl;
+        return true;
     }
-    cout << "$$$this procedure has been done properly!" << endl;
+    
+    return false;
 }
+
+void TextEdit::Run()
+{
+    cout << "______________________Welcome to My TextEdit______________________" << endl;
+    ReadFile("file_in.txt");//we think it as a prem eidition. and we load it at the beginning of the work.
+    Display();
+
+    char command='\0';
+    while(command!='q')
+    {
+        cout << "$$$Please Enter your right command!" << endl;
+        cout << "u:Undo\tc:ChangeLine\tf:FindString\td:DeleteLine\ti:InsertLine" << endl;
+        cout << "g:GotoLine\ts:Display\tp:PreviousLine\tn:NextLine\tq:quit" << endl;
+        cin >> command;
+        getchar();
+        cout << endl;
+        switch(command)
+        {
+            case 'u':
+                Undo();
+                break;
+            case 'c':
+                SaveUndo();
+                ChangeLine();
+                break;
+            case 'f':
+                SaveUndo();
+                FindString();
+                break;
+            case 'd':
+                SaveUndo();
+                DeleteLine();
+                break;
+            case 'i':
+                SaveUndo();
+                InsertLine();
+                break;
+            case 'g':
+                SaveUndo();
+                GotoLine();
+                break;
+            case 's'://show
+                //SaveUndo();
+                Display();
+                break;
+            case 'p':
+                SaveUndo();
+                PreviousLine();
+                break;
+            case 'n':
+                SaveUndo();
+                NextLine();
+                break;
+            default:
+                break;
+        }
+    }
+    WriteFile("file_out.txt");//at the end, we save the answer in the out file.
+
+}
+
 
 
 
@@ -306,41 +484,7 @@ bool TextEdit::InsertLine()
 
 int main()
 {
-    /*
-    list<string> ltest;
-    list<string>::iterator fl;
-    ltest.push_front("123");
-    ltest.push_front("456");
-    ltest.push_back("789");
-
-    ifstream inFile("file_in.txt",ios::in);
-    if(inFile.is_open())
-    {
-        string tempstr;
-        while(!inFile.eof())
-        {
-            getline(inFile, tempstr);
-            ltest.push_back(tempstr);
-            tempstr.clear();
-        }
-        inFile.close();
-    }
-    else
-    {
-        cout << "打开失败" << endl;
-    }
-
-    for (fl = ltest.begin(); fl != ltest.end();fl++)
-    {
-        cout << *fl << " ";
-    }
-    */
-
     TextEdit little;
-    
-    little.ReadFile("file_in.txt");
-    //little.ChangeLine();
-    little.InsertLine();
-    little.WriteFile("file_out.txt");
+    little.Run();
     return 0;
 }
