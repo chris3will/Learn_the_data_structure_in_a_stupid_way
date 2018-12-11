@@ -205,7 +205,12 @@ void compress()
     {//读压缩文件，读入文件头，获得字符总数，字符种数，以及huffman表信息重建哈夫曼树
         //cout << "asd"<< endl;
         //还应该把这个哈夫曼树导入进文件
+
+
+        //outFile<<aftercode.size()
         outFile.write((char*)&aftercode, aftercode.size());
+        //把字典存进文件
+
         ifstream iFile("codesource.txt",ios::in);
         string tempstr;
         while(!iFile.eof())
@@ -306,19 +311,29 @@ void Uncompress()
 
     infp.seekg(0, ios::beg);
     //将文件指针回复到文件最开始的样子
-    
-
-
-
-
-    
-
 
     const unsigned long n = 256;
     char ch[n];
     unsigned long w[n];//权
     unsigned long i, size = 0;
     char cha;
+
+    string basicmsg;
+    //
+    getline(infp, basicmsg);
+    for(int i=0;i<n;i++)
+    {
+        ch[i]=char(i);
+        //问题在于我怎样知道每一个字符后面的权重是几位的? 无论是字符形式还是char形式，我现在都不知道读取几位
+        w[i] = int(basicmsg[i]);//假设256个字符，每一个都是一个char，每一个数据的权重都已经化成了八位2进制数，这样读取出来的都OK
+    }
+
+
+
+
+    
+
+
     
 
     
